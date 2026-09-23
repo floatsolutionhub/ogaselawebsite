@@ -13,7 +13,7 @@ const faqs = [
       "Yes. Posting a standard listing is free. You can optionally pay to boost a listing so it reaches more buyers, faster.",
   },
   {
-    question: "How do I know a seller or buyer is legit?",
+    question: "How do I know a seller or buyer is legit at a glance?",
     answer:
       "Sellers can complete KYC verification and earn a verified badge on their profile. We recommend chatting in-app first and meeting in safe, public locations for in-person exchanges.",
   },
