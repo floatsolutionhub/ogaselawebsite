@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Camera, MapPin, MessageCircle, ShieldCheck, Sparkles, Star } from "lucide-react";
 import { Container } from "../Container";
@@ -103,8 +104,18 @@ function FloatingMock() {
         initial={{ opacity: 0, scale: 0.92, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.7, delay: 0.3 }}
-        className="absolute inset-4 rounded-[2.5rem] bg-gradient-to-br from-brand-600 to-brand-800 shadow-2xl shadow-brand-900/30"
-      />
+        className="absolute inset-4 overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-brand-600 to-brand-800 shadow-2xl shadow-brand-900/30"
+      >
+        <Image
+          src="/images/ladies-phone.jpg"
+          alt="Two Nigerian women smiling at a phone"
+          fill
+          priority
+          sizes="(min-width: 1024px) 40vw, 384px"
+          className="object-cover object-[30%_50%]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-brand-900/40 via-transparent to-transparent" />
+      </motion.div>
 
       <motion.div
         initial={{ opacity: 0, x: -30, y: -10 }}
