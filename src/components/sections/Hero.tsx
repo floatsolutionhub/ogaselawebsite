@@ -42,7 +42,7 @@ export function Hero() {
             transition={{ duration: 0.6, delay: 0.55 }}
             className="mt-6 max-w-lg text-lg leading-relaxed text-ink-500"
           >
-            Ogasela is the marketplace built for the everyday Nigerian hustle — list an ad
+            Ogasela is the marketplace built for the everyday Nigerian hustle, list an ad
             in minutes, chat with real buyers, and get paid safely, all from your phone.
           </motion.p>
 
