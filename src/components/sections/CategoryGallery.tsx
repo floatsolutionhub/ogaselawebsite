@@ -78,7 +78,7 @@ export function CategoryGallery() {
           Photos: {" "}
           {credits.map((c, i) => (
             <span key={c.url}>
-              <a href={c.url} target="_blank" rel="noreferrer" className="hover:text-ink-500 hover:underline">
+              <a href={c.url} target="_blank" rel="noopener noreferrer" className="hover:text-ink-500 hover:underline">
                 {c.name}
               </a>{" "}
               ({c.license}){i < credits.length - 1 ? ", " : ""}

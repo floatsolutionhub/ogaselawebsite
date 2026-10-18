@@ -3,6 +3,7 @@ import { Clock, Mail, MapPin, Navigation } from "lucide-react";
 import { Container } from "@/components/Container";
 import { PageHeader } from "@/components/PageHeader";
 import { FadeIn } from "@/components/FadeIn";
+import { MapEmbed } from "@/components/MapEmbed";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -24,13 +25,7 @@ export default function LocateUsPage() {
       <section className="py-20">
         <Container className="grid gap-10 lg:grid-cols-5">
           <FadeIn className="overflow-hidden rounded-3xl ring-1 ring-ink-900/5 lg:col-span-3">
-            <iframe
-              title="Ogasela office location"
-              src={`https://www.google.com/maps?q=${mapQuery}&output=embed`}
-              className="h-[420px] w-full border-0 lg:h-full"
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
+            <MapEmbed query="Lagos, Nigeria" title="Ogasela office location" />
           </FadeIn>
 
           <FadeIn delay={0.1} className="lg:col-span-2">
@@ -43,7 +38,8 @@ export default function LocateUsPage() {
                   <h3 className="font-bold text-ink-900">Our office</h3>
                   <p className="mt-1 text-sm text-ink-500">{site.location}</p>
                   <p className="mt-1 text-xs text-ink-300">
-                    Exact address available on request.
+                    Exact address available on request. Office Pickup branch addresses are shown
+                    in the app when you choose a branch.
                   </p>
                 </div>
               </div>
@@ -76,7 +72,7 @@ export default function LocateUsPage() {
               <a
                 href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-full bg-brand-600 px-5 py-3 text-sm font-semibold text-white shadow-md shadow-brand-600/20 transition-colors hover:bg-brand-700"
               >
                 <Navigation size={16} />

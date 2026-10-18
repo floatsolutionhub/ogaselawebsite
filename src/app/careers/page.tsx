@@ -14,7 +14,7 @@ const perks = [
   {
     icon: Rocket,
     title: "Real impact",
-    description: "Ship features that thousands of Nigerian buyers and sellers use every day.",
+    description: "Ship features that Nigerian buyers and sellers across the country will rely on every day.",
   },
   {
     icon: Sprout,

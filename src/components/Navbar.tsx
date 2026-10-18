@@ -7,7 +7,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import clsx from "clsx";
 import { Container } from "./Container";
-import { Button } from "./Button";
+import { GetAppButton } from "./GetAppButton";
 import { Logo } from "./Logo";
 import { primaryNavLinks } from "@/lib/site";
 
@@ -23,7 +23,7 @@ export function Navbar() {
           <span className="text-xl font-bold tracking-tight text-ink-900">Ogasela</span>
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-1 lg:flex">
           {primaryNavLinks.map((link) => {
             const active = pathname === link.href;
             return (
@@ -48,17 +48,15 @@ export function Navbar() {
           })}
         </nav>
 
-        <div className="hidden md:block">
-          <Button href="#download" variant="primary">
-            Get the app
-          </Button>
+        <div className="hidden lg:block">
+          <GetAppButton />
         </div>
 
         <button
           type="button"
           aria-label={open ? "Close menu" : "Open menu"}
           onClick={() => setOpen((v) => !v)}
-          className="flex h-10 w-10 items-center justify-center rounded-full text-ink-900 md:hidden"
+          className="flex h-10 w-10 items-center justify-center rounded-full text-ink-900 lg:hidden"
         >
           {open ? <X size={22} /> : <Menu size={22} />}
         </button>
@@ -71,7 +69,7 @@ export function Navbar() {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25, ease: "easeInOut" }}
-            className="overflow-hidden border-t border-ink-900/5 bg-surface md:hidden"
+            className="overflow-hidden border-t border-ink-900/5 bg-surface lg:hidden"
           >
             <Container className="flex flex-col gap-1 py-4">
               {primaryNavLinks.map((link) => (
@@ -89,9 +87,7 @@ export function Navbar() {
                   {link.label}
                 </Link>
               ))}
-              <Button href="#download" variant="primary" className="mt-2 w-full">
-                Get the app
-              </Button>
+              <GetAppButton className="mt-2 w-full" onClick={() => setOpen(false)} />
             </Container>
           </motion.nav>
         )}

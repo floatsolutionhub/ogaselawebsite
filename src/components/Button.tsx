@@ -36,9 +36,18 @@ export function Button({
     className
   );
 
+  // Off-site links (stores, Paystack) open in a new tab; on-site ones use client-side navigation.
+  if (href && /^https?:\/\//.test(href)) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className={classes} onClick={onClick}>
+        {children}
+      </a>
+    );
+  }
+
   if (href) {
     return (
-      <Link href={href} className={classes}>
+      <Link href={href} className={classes} onClick={onClick}>
         {children}
       </Link>
     );

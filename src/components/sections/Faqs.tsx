@@ -8,34 +8,44 @@ import { FadeIn } from "../FadeIn";
 
 const faqs = [
   {
-    question: "Is it free to post a listing on Ogasela?",
+    question: "When can I download Ogasela?",
     answer:
-      "Yes. Posting a standard listing is free. You can optionally pay to boost a listing so it reaches more buyers, faster.",
+      "We're preparing the iOS and Android apps for launch. Join the waiting list and we'll email you the day Ogasela is in the App Store and Google Play. If you'd like to try it sooner, volunteer as a tester.",
   },
   {
-    question: "How do I know a seller or buyer is legit at a glance?",
+    question: "Is it free to post an ad?",
     answer:
-      "Sellers can complete KYC verification and earn a verified badge on their profile. We recommend chatting in-app first and meeting in safe, public locations for in-person exchanges.",
+      "Yes. The Free plan keeps an ad live for 7 days with up to 5 photos, and you can run a few Free ads at once in eligible categories. Paid plans (Basic, Standard and Premium) give a longer run, more photos and video, a boost in search, full AI listing tools and promotion on TikTok and Facebook. Current prices are shown in the app before you pay.",
+  },
+  {
+    question: "Does Ogasela take a commission when I sell?",
+    answer:
+      "No. When you deal directly with a buyer, the full price is yours. Ogasela earns from optional paid ad plans and promotions, and from a small, clearly shown fee when a buyer chooses Office Pickup.",
+  },
+  {
+    question: "What is Office Pickup?",
+    answer:
+      "On eligible items, the buyer pays Ogasela the item price plus a 3% service fee. The seller drops the item at an Ogasela branch, our staff inspect it against the ad, and the buyer collects it (or has it delivered where available). If the item fails inspection, or the buyer cancels before collection, we refund the payment less a 1% processing fee.",
+  },
+  {
+    question: "How do I know a seller is genuine?",
+    answer:
+      "Verified sellers have submitted a government ID, passed a live face check and provided proof of address, which our team reviews. Look for the verified badge and read their reviews. Keep chats in the app, never pay before you've seen the item, and meet in safe public places, or use Office Pickup.",
   },
   {
     question: "What can I sell on Ogasela?",
     answer:
-      "Almost anything — electronics, fashion, home & furniture, vehicles, real estate, jobs, and more. Prohibited and restricted items are outlined in our Terms & Conditions.",
+      "Almost anything legal: phones and electronics, fashion, home and furniture, vehicles, property, jobs, services and more. Prohibited items, such as weapons, drugs, counterfeit or stolen goods, are listed in our Terms & Conditions, and every ad can be reviewed by our moderation team.",
   },
   {
-    question: "How do payments work?",
+    question: "How do I pay for an ad plan?",
     answer:
-      "Ogasela includes an in-app wallet you can fund and withdraw from. Sellers using in-app payments get paid directly into their wallet once a transaction is confirmed.",
-  },
-  {
-    question: "Is Ogasela available outside Nigeria?",
-    answer:
-      "Right now Ogasela is focused on connecting buyers and sellers across Nigeria's states and cities, with more regions planned as we grow.",
+      "By card, bank transfer or USSD on Paystack's secure checkout. Ogasela never sees your card details. If an ad you paid for is rejected in review, we refund the plan fee to your original payment method.",
   },
   {
     question: "How do I delete my account or my data?",
     answer:
-      "Visit the Account / Data Deletion page from our footer at any time to request deletion of your account or specific personal data.",
+      "Use the Account / Data Deletion page (linked in our footer) at any time to ask us to delete your account or specific personal data. You can also email privacy@ogasela.com.",
   },
 ];
 

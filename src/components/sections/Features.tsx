@@ -1,37 +1,47 @@
-import { BadgeCheck, Bell, MapPinned, ShieldCheck, Tags, Wallet2 } from "lucide-react";
+import { BadgeCheck, Bell, MapPinned, PackageCheck, ShieldCheck, Sparkles, Star, Tags } from "lucide-react";
 import { Container } from "../Container";
 import { FadeIn, StaggerGroup, StaggerItem } from "../FadeIn";
 
 const features = [
   {
     icon: ShieldCheck,
-    title: "KYC-verified sellers",
-    description: "Look for the verified badge on trusted sellers before you buy.",
+    title: "Verified sellers",
+    description: "Sellers prove who they are with ID, a face check and proof of address. Look for the badge before you buy.",
   },
   {
     icon: Tags,
     title: "Every category",
-    description: "Electronics, fashion, real estate, jobs, vehicles, and more — all in one app.",
+    description: "Phones, fashion, property, vehicles, home & furniture, jobs, services and more — all in one app.",
   },
   {
     icon: MapPinned,
     title: "Hyperlocal search",
-    description: "Find listings by state and city, so you're always shopping near home.",
+    description: "Browse by state and city across all 36 states and the FCT, so you're always shopping near home.",
   },
   {
-    icon: Wallet2,
-    title: "In-app wallet",
-    description: "Fund your wallet, get paid, and track your balance without leaving the app.",
+    icon: Star,
+    title: "Reviews you can trust",
+    description: "Buyers rate sellers after dealing with them, so a good track record is visible to everyone who comes next.",
   },
   {
     icon: Bell,
     title: "Real-time chat",
-    description: "Message sellers instantly and get notified the moment they reply.",
+    description: "Message sellers instantly, get notified the moment they reply, and see safety tips right in the chat.",
   },
   {
     icon: BadgeCheck,
-    title: "Boosted listings",
-    description: "Promote your ad to reach more buyers, faster, when it matters most.",
+    title: "Ad plans that get you seen",
+    description: "Paid plans give your ad a longer run, more photos and video, a boost in search, and promotion on TikTok and Facebook.",
+  },
+  {
+    icon: PackageCheck,
+    title: "Office Pickup",
+    description: "On eligible items, pay Ogasela instead of a stranger. We inspect the item against its ad before you collect it.",
+  },
+  {
+    icon: Sparkles,
+    title: "AI listing helper",
+    description: "Get a description written for you, a suggested price from similar ads, and cleaner photos — in seconds.",
   },
 ];
 
@@ -48,7 +58,7 @@ export function Features() {
           </h2>
         </FadeIn>
 
-        <StaggerGroup className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <StaggerGroup className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((feature) => (
             <StaggerItem key={feature.title}>
               <div className="group h-full rounded-2xl bg-white p-6 shadow-sm ring-1 ring-ink-900/5 transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-brand-900/5">

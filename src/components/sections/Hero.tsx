@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Camera, MapPin, MessageCircle, ShieldCheck, Sparkles, Star } from "lucide-react";
+import { Camera, MapPin, MessageCircle, PackageCheck, ShieldCheck, Sparkles } from "lucide-react";
 import { Container } from "../Container";
 import { Button } from "../Button";
+import { GetAppButton } from "../GetAppButton";
 import { AnimatedText } from "../AnimatedText";
 import { StoreBadges } from "../StoreBadges";
 
@@ -23,7 +24,7 @@ export function Hero() {
             className="mb-6 inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-sm font-medium text-brand-700 shadow-sm ring-1 ring-brand-100"
           >
             <Sparkles size={14} className="text-gold-500" />
-            Now welcoming early sellers across Nigeria
+            Launching soon across all 36 states &amp; the FCT
           </motion.div>
 
           <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-ink-900 sm:text-5xl lg:text-6xl">
@@ -42,8 +43,9 @@ export function Hero() {
             transition={{ duration: 0.6, delay: 0.55 }}
             className="mt-6 max-w-lg text-lg leading-relaxed text-ink-500"
           >
-            Ogasela is the marketplace built for the everyday Nigerian hustle, list an ad
-            in minutes, chat with real buyers, and get paid safely, all from your phone.
+            Ogasela is the marketplace built for the everyday Nigerian hustle. List an ad in
+            minutes, chat with verified sellers and real buyers near you, and when you want
+            extra peace of mind, let us inspect the item before you collect it.
           </motion.p>
 
           <motion.div
@@ -52,11 +54,9 @@ export function Hero() {
             transition={{ duration: 0.6, delay: 0.7 }}
             className="mt-8 flex flex-col gap-3 sm:flex-row"
           >
-            <Button href="#download" variant="primary" className="px-8 py-4 text-base">
-              Get the app
-            </Button>
-            <Button href="/about" variant="secondary" className="px-8 py-4 text-base">
-              Learn more
+            <GetAppButton className="px-8 py-4 text-base" />
+            <Button href="/how-it-works" variant="secondary" className="px-8 py-4 text-base">
+              See how it works
             </Button>
           </motion.div>
 
@@ -69,6 +69,7 @@ export function Hero() {
             <Highlight icon={<ShieldCheck size={16} />} label="Verified sellers" />
             <Highlight icon={<MessageCircle size={16} />} label="In-app chat" />
             <Highlight icon={<MapPin size={16} />} label="Nearby listings" />
+            <Highlight icon={<PackageCheck size={16} />} label="Office Pickup" />
           </motion.div>
 
           <motion.div
@@ -137,19 +138,15 @@ function FloatingMock() {
         className="absolute right-0 top-1/2 w-44 -translate-y-1/2 rounded-2xl bg-white p-4 shadow-xl"
       >
         <div className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gold-100 text-gold-600 font-bold text-xs">
-            AO
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gold-100 text-gold-600">
+            <MessageCircle size={16} />
           </span>
           <div>
-            <p className="text-xs font-semibold text-ink-900">Ada O.</p>
-            <div className="flex items-center gap-0.5 text-gold-500">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} size={10} fill="currentColor" />
-              ))}
-            </div>
+            <p className="text-xs font-semibold text-ink-900">New message</p>
+            <p className="text-[10px] text-ink-300">about your sofa ad</p>
           </div>
         </div>
-        <p className="mt-2 text-xs text-ink-500">&quot;Sold my old furniture in a day!&quot;</p>
+        <p className="mt-2 text-xs text-ink-500">&quot;Is it still available? I&apos;m in Yaba.&quot;</p>
       </motion.div>
 
       <motion.div

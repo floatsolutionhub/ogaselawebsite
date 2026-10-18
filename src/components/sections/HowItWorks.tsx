@@ -1,25 +1,26 @@
-import { Camera, MessageCircle, Wallet } from "lucide-react";
+import Link from "next/link";
+import { Camera, Handshake, MessageCircle } from "lucide-react";
 import { Container } from "../Container";
 import { FadeIn, StaggerGroup, StaggerItem } from "../FadeIn";
 
 const steps = [
   {
     icon: Camera,
-    title: "Post your listing",
+    title: "Post your ad",
     description:
-      "Snap a few photos, pick a category, and set your price. Your ad goes live in minutes — no fees to get started.",
+      "Snap a few photos, pick a category and set your price. Start on the Free plan, or choose a paid plan for more photos, a longer run and a boost in search. Our AI helper can even write the description.",
   },
   {
     icon: MessageCircle,
     title: "Chat with buyers",
     description:
-      "Real people reach out directly in-app. Answer questions, negotiate, and agree on a meet-up or delivery.",
+      "Buyers near you message or call you from your ad. Answer questions, share more photos and agree a price, with every chat kept on record in the app.",
   },
   {
-    icon: Wallet,
-    title: "Get paid safely",
+    icon: Handshake,
+    title: "Close the deal safely",
     description:
-      "Sell with confidence using verified profiles and secure in-app payments — your money, your control.",
+      "Meet in a safe public place, or use Office Pickup on eligible items: the buyer pays Ogasela, you drop the item at our branch, and we inspect it before handing it over.",
   },
 ];
 
@@ -35,8 +36,8 @@ export function HowItWorks() {
             Selling on Ogasela takes three steps
           </h2>
           <p className="mt-4 text-lg text-ink-500">
-            No middlemen, no confusing fees — just a straightforward way to turn what you
-            have into what you need.
+            No confusing fees and no commission on your deals — just a straightforward way to
+            turn what you have into what you need.
           </p>
         </FadeIn>
 
@@ -56,6 +57,13 @@ export function HowItWorks() {
             </StaggerItem>
           ))}
         </StaggerGroup>
+
+        <p className="mt-10 text-center text-sm text-ink-500">
+          Buying instead?{" "}
+          <Link href="/how-it-works" className="font-semibold text-brand-700 hover:underline">
+            See how Ogasela works for buyers and sellers
+          </Link>
+        </p>
       </Container>
     </section>
   );

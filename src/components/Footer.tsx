@@ -3,6 +3,13 @@ import { Container } from "./Container";
 import { Logo } from "./Logo";
 import { footerLinks, site } from "@/lib/site";
 
+const socialLinks = [
+  { label: "Instagram", short: "IG", href: site.social.instagram },
+  { label: "X (Twitter)", short: "X", href: site.social.x },
+  { label: "Facebook", short: "FB", href: site.social.facebook },
+  { label: "TikTok", short: "TT", href: site.social.tiktok },
+].filter((social) => social.href);
+
 export function Footer() {
   return (
     <footer className="border-t border-ink-900/5 bg-brand-900 text-brand-50">
@@ -15,17 +22,15 @@ export function Footer() {
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-brand-200">
             {site.tagline}
           </p>
-          <div className="mt-6 flex gap-3">
-            <SocialIcon href={site.social.instagram} label="Instagram">
-              IG
-            </SocialIcon>
-            <SocialIcon href={site.social.twitter} label="Twitter / X">
-              X
-            </SocialIcon>
-            <SocialIcon href={site.social.facebook} label="Facebook">
-              FB
-            </SocialIcon>
-          </div>
+          {socialLinks.length > 0 && (
+            <div className="mt-6 flex gap-3">
+              {socialLinks.map((social) => (
+                <SocialIcon key={social.label} href={social.href} label={social.label}>
+                  {social.short}
+                </SocialIcon>
+              ))}
+            </div>
+          )}
         </div>
 
         <FooterColumn title="Company" links={footerLinks.company} />
@@ -49,8 +54,8 @@ export function Footer() {
       <div className="border-t border-white/10">
         <Container className="flex flex-col items-center justify-between gap-3 py-6 text-xs text-brand-300 md:flex-row">
           <p>
-            &copy; {new Date().getFullYear()} Ogasela Marketplace, Lagos, Nigeria. All rights
-            reserved.
+            &copy; {new Date().getFullYear()} {site.legalName}, {site.location}. All rights reserved.
+            Ogasela is a trademark of {site.legalName}.
           </p>
           <p>Made for the everyday Nigerian hustle.</p>
         </Container>
@@ -96,7 +101,7 @@ function SocialIcon({
       href={href}
       aria-label={label}
       target="_blank"
-      rel="noreferrer"
+      rel="noopener noreferrer"
       className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-[11px] font-bold text-white transition-colors hover:bg-white/20"
     >
       {children}

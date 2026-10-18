@@ -5,15 +5,15 @@ import { Heart, Rocket } from "lucide-react";
 import { Container } from "../Container";
 import { FadeIn } from "../FadeIn";
 import { Modal } from "../Modal";
-import { TestersForm } from "../TestersForm";
 import { DonateOptions } from "../DonateOptions";
+import { useLaunch } from "../LaunchProvider";
 
 export function GetInvolved() {
-  const [testersOpen, setTestersOpen] = useState(false);
+  const { openInterestForm } = useLaunch();
   const [donateOpen, setDonateOpen] = useState(false);
 
   return (
-    <section className="bg-surface py-24">
+    <section id="get-involved" className="scroll-mt-20 bg-surface py-24">
       <Container>
         <FadeIn className="mx-auto max-w-2xl text-center">
           <p className="text-sm font-semibold uppercase tracking-wide text-brand-600">
@@ -32,13 +32,13 @@ export function GetInvolved() {
               </div>
               <h3 className="mt-6 text-2xl font-bold">Join our testers</h3>
               <p className="mt-3 flex-1 text-brand-100">
-                Be among the first 100 to experience the disruption we&apos;re bringing to
-                Nigerian commerce. Get early access, shape the product with your feedback, and
-                help us build something real — before anyone else even hears about it.
+                Try pre-release builds of the app on your own phone, tell us what works and what
+                doesn&apos;t, and help shape a marketplace built for how Nigerians really trade —
+                before anyone else gets their hands on it.
               </p>
               <button
                 type="button"
-                onClick={() => setTestersOpen(true)}
+                onClick={() => openInterestForm("tester")}
                 className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-semibold text-brand-700 shadow-lg transition-transform hover:-translate-y-0.5"
               >
                 <Rocket size={16} /> Join Our Testers
@@ -68,10 +68,6 @@ export function GetInvolved() {
           </FadeIn>
         </div>
       </Container>
-
-      <Modal open={testersOpen} onClose={() => setTestersOpen(false)} title="Join our testers">
-        <TestersForm />
-      </Modal>
 
       <Modal open={donateOpen} onClose={() => setDonateOpen(false)} title="Support our journey">
         <DonateOptions />
