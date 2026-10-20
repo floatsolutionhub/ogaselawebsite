@@ -21,7 +21,7 @@ export default function ContactPage() {
       />
 
       <section className="py-20">
-        <Container className="grid gap-12 lg:grid-cols-5">
+        <Container className="grid gap-12 lg:grid-cols-5 [&>*]:min-w-0">
           <FadeIn className="lg:col-span-2">
             <div className="space-y-6">
               <InfoCard
@@ -63,7 +63,7 @@ function InfoCard({
       <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-700">
         {icon}
       </div>
-      <div>
+      <div className="min-w-0 break-words">
         <h3 className="font-bold text-ink-900">{title}</h3>
         {lines.map((line) => (
           <p key={line} className="mt-1 text-sm text-ink-500">

@@ -11,6 +11,7 @@ import { LaunchProvider } from "@/components/site/LaunchProvider";
 import { getLaunchConfig } from "@/config/launch";
 import { LiveProvider } from "@/components/providers/LiveProvider";
 import { LocationProvider } from "@/components/providers/LocationProvider";
+import { PageLoader } from "@/components/providers/PageLoader";
 import { SessionProvider, type Viewer } from "@/components/providers/SessionProvider";
 import { ToastProvider } from "@/components/providers/ToastProvider";
 import { env } from "@/config/env";
@@ -77,6 +78,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         >
           Skip to content
         </a>
+        <PageLoader />
         <ToastProvider>
           <SessionProvider viewer={viewer} idleMinutes={env.autoLogoutMinutes}>
             <LocationProvider initial={location}>
@@ -86,7 +88,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                   {/* Not in a Suspense boundary on purpose: the shell then waits for the page, so
                       notFound() and redirects send real 404/307 statuses instead of streamed fallbacks. */}
                   <SiteHeader />
-                  <main id="main" className="flex-1">
+                  <main id="main" className="flex-1 overflow-x-clip">
                     {children}
                   </main>
                   <SiteFooter />

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useTransition } from "react";
 import clsx from "clsx";
-import { Ban, ChevronLeft, LoaderCircle, PackageCheck, Scale, Send, ShieldAlert } from "lucide-react";
+import { Ban, ChevronLeft, LoaderCircle, PackageCheck, Scale, Send, ShieldAlert, UserX } from "lucide-react";
 
 import { setBlocked } from "@/app/actions/listings";
 import { getUnreadCounts, loadMessages, markChatRead, sendChatMessage } from "@/app/actions/messages";
@@ -156,14 +156,16 @@ export function ChatThread({
           >
             <Scale aria-hidden className="size-3.5" /> Dispute
           </Link>
-          <button
-            type="button"
-            disabled={blocking}
-            onClick={() => (conversation.isBlockedByMe ? changeBlock(false) : setConfirmBlock(true))}
-            className="inline-flex items-center gap-1.5 rounded-full border border-danger/25 px-3 py-1.5 text-xs font-semibold text-danger hover:bg-danger/5"
-          >
-            <Ban aria-hidden className="size-3.5" /> {conversation.isBlockedByMe ? "Unblock" : "Block"}
-          </button>
+          {!conversation.isOtherParticipantDeleted && (
+            <button
+              type="button"
+              disabled={blocking}
+              onClick={() => (conversation.isBlockedByMe ? changeBlock(false) : setConfirmBlock(true))}
+              className="inline-flex items-center gap-1.5 rounded-full border border-danger/25 px-3 py-1.5 text-xs font-semibold text-danger hover:bg-danger/5"
+            >
+              <Ban aria-hidden className="size-3.5" /> {conversation.isBlockedByMe ? "Unblock" : "Block"}
+            </button>
+          )}
         </div>
 
         {/* Messages */}
@@ -219,7 +221,7 @@ export function ChatThread({
           <p role="note" className="flex items-start gap-2 rounded-xl bg-gold-50 px-3 py-2 text-xs font-medium text-ink-900 ring-1 ring-gold-200">
             <ShieldAlert aria-hidden className="mt-0.5 size-4 shrink-0 text-gold-700" /> {safetyNotice}
           </p>
-          {officePickup && !conversation.isBlockedByMe && (
+          {officePickup && !conversation.isBlockedByMe && !conversation.isOtherParticipantDeleted && (
             <div className="mt-2 flex items-center gap-2 rounded-xl bg-brand-50 py-1.5 pl-3 pr-1.5 ring-1 ring-brand-100">
               <PackageCheck aria-hidden className="size-4 text-brand-600" />
               <span className="flex-1 text-xs font-medium">Want office pickup?</span>
@@ -229,7 +231,14 @@ export function ChatThread({
             </div>
           )}
         </div>
-        {conversation.isBlockedByMe ? (
+        {conversation.isOtherParticipantDeleted ? (
+          <div role="note" className="m-4 flex items-center gap-3 rounded-2xl bg-canvas px-4 py-3">
+            <UserX aria-hidden className="size-5 shrink-0 text-ink-500" />
+            <p className="flex-1 text-sm text-ink-500">
+              This account was deleted. The chat is kept here for your reference, but no new messages can be sent.
+            </p>
+          </div>
+        ) : conversation.isBlockedByMe ? (
           <div className="m-4 flex items-center gap-3 rounded-2xl bg-canvas px-4 py-3">
             <Ban aria-hidden className="size-5 text-ink-500" />
             <p className="flex-1 text-sm text-ink-500">You blocked this user. Neither of you can send messages in this chat.</p>

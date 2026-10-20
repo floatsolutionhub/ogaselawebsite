@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Ban, MessageCircle } from "lucide-react";
+import { Ban, MessageCircle, UserX } from "lucide-react";
 
 import { Container } from "@/components/Container";
 import { EmptyState, SectionHeading } from "@/components/market/Badges";
@@ -64,7 +64,11 @@ export default async function MessagesPage() {
                     <span className="mt-0.5 block text-sm text-ink-500">
                       {user.id === conversation.buyerId ? "You're the buyer" : "You're the seller"} in this chat
                     </span>
-                    {conversation.isBlockedByMe && (
+                    {conversation.isOtherParticipantDeleted ? (
+                      <span className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-ink-500">
+                        <UserX aria-hidden className="size-3.5" /> Account deleted
+                      </span>
+                    ) : conversation.isBlockedByMe && (
                       <span className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-danger">
                         <Ban aria-hidden className="size-3.5" /> Blocked
                       </span>

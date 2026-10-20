@@ -37,6 +37,14 @@ export const confirmCheckout = (id: string, reference: string) =>
 export const cancelCheckout = (id: string, reference: string) =>
   api.post<ListingCheckout>(`/listings/${id}/checkout/${encodeURIComponent(reference)}/cancel`);
 
+/** A paid plan change for an ad whose plan is running: full price, the new period starts once paid. */
+export const upgradePlan = (id: string, promotionPlanId: string, returnUrl: string) =>
+  api.post<ListingCheckout>(`/listings/${id}/upgrade`, { promotionPlanId, paymentMethod: "Card", returnUrl });
+/** A fixed, rejected edit of a live ad back to review - free, its plan keeps running. */
+export const resubmitListing = (id: string) => api.post<Listing>(`/listings/${id}/resubmit`);
+/** Draft, rejected, pending or expired ads only. A paid plan isn't refunded. */
+export const deleteListing = (id: string) => api.del<void>(`/listings/${id}`);
+
 export const reportListing = (id: string, reason: string) => api.post<void>(`/listings/${id}/report`, { reason });
 
 /** promotionPlanId null while posting - the tools are free then. */

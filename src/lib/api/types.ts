@@ -71,7 +71,9 @@ export type ListingStatus =
   | "Expired"
   | "Paused"
   | "Sold"
-  | "PendingReview";
+  | "PendingReview"
+  /** Removed by its seller - the API never returns these, but the enum has it. */
+  | "Deleted";
 
 export interface Listing {
   id: string;
@@ -189,6 +191,8 @@ export interface Conversation {
   createdAt: string;
   lastMessageAt: string | null;
   isBlockedByMe: boolean;
+  /** The other person deleted their account - the chat stays readable, but closed for good. */
+  isOtherParticipantDeleted: boolean;
 }
 
 export interface Message {
@@ -533,6 +537,17 @@ export interface Announcement {
   image: string;
   cta: { label: string; url: string } | null;
   createdAt: string;
+}
+
+/** TestimonialsController GET /testimonials - published only, newest first. */
+export interface Testimonial {
+  id: string;
+  quote: string;
+  name: string;
+  /** e.g. "Seller, Ikeja" or "Buyer, Wuse 2". */
+  role: string;
+  /** 1 to 5. */
+  rating: number;
 }
 
 export interface SocialLoginResponse extends AuthTokenResponse {

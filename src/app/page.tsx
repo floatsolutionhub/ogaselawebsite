@@ -93,7 +93,9 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
       <div className="mt-20">
         <HowItWorks />
         <Features />
-        <Testimonials />
+        <Suspense fallback={null}>
+          <Testimonials />
+        </Suspense>
         <ComingSoon />
         <GetInvolved />
         <Faqs />

@@ -15,7 +15,8 @@ export const CHECKOUT_COOKIE = "og_checkout";
 const PAYMENT_GRACE_MS = 30 * 60_000;
 
 const checkoutSchema = z.object({
-  kind: z.enum(["listing", "pickup"]),
+  /** listing: paying for a new or renewed ad. upgrade: moving a running ad onto a bigger plan. */
+  kind: z.enum(["listing", "upgrade", "pickup"]),
   id: z.string().uuid().or(z.string().regex(/^[0-9a-f-]{36}$/i)),
   reference: z.string().min(1).max(200),
 });

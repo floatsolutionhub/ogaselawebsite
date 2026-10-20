@@ -5,12 +5,13 @@ import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { Camera, Check, ChevronLeft, CircleAlert, ImagePlus, Link as LinkIcon, LoaderCircle, Sparkles, Tag, X } from "lucide-react";
 
-import { aiDescription, aiPrice, saveDraft, uploadPhoto, type DraftInput } from "@/app/actions/sell";
+import { aiDescription, aiPrice, saveDraft, submitChanges, uploadPhoto, type DraftInput } from "@/app/actions/sell";
 import { useToast } from "@/components/providers/ToastProvider";
 import { Dialog } from "@/components/ui/Dialog";
 import { buttonClass, inputClass } from "@/components/ui/styles";
 import { compressImage, MAX_EDGE, UploadError } from "@/lib/client/images";
 import { formatNaira } from "@/lib/format";
+import type { EditMode } from "@/lib/listings";
 
 type CategoryNode = { id: string; name: string; children: { id: string; name: string }[] };
 
@@ -82,16 +83,22 @@ type Suggestion =
  * suggestions) → promote & pay. The ad is a Draft on the server from the first Continue, saved on
  * every Continue and when the tab is hidden, so closing midway never loses it - it's in My ads →
  * Drafts, and opening it there resumes here.
+ *
+ * The same steps edit an existing ad (see EditMode): a live ad is never saved halfway - its changes
+ * go to review only when submitted at the end - and a rejected edit of one is resubmitted for free.
+ * An expired ad is saved like a draft and goes on to choosing a plan.
  */
 export function PostWizard({
   tree,
   draft,
+  mode,
   canSell,
   location,
   photoLimits,
 }: {
   tree: CategoryNode[];
   draft: WizardDraft | null;
+  mode: EditMode;
   canSell: boolean;
   location: string | null;
   photoLimits: { max: number; min: number };
@@ -163,7 +170,7 @@ export function PostWizard({
   useEffect(() => {
     const onHide = () => {
       const { values: v, photos: p, listingId: id, handedOff } = latest.current;
-      if (document.visibilityState === "hidden" && !handedOff && canSell) save(v, p, id).catch(() => {});
+      if (document.visibilityState === "hidden" && !handedOff && canSell && mode !== "live") save(v, p, id).catch(() => {});
     };
     document.addEventListener("visibilitychange", onHide);
     return () => document.removeEventListener("visibilitychange", onHide);
@@ -297,11 +304,26 @@ export function PostWizard({
 
   const next = async () => {
     if (!validate()) return;
-    setBusy(current.key === "photos" ? "Uploading photos…" : "Saving your draft…");
+    const resubmits = mode === "live" || mode === "fix";
+    setBusy(current.key === "photos" ? "Uploading photos…" : resubmits ? "Saving…" : "Saving your draft…");
     try {
       const list = current.key === "photos" ? await uploadPending(photos) : photos;
-      setBusy("Saving your draft…");
-      const id = await save(values, list, listingId);
+      if (resubmits && step === 2 && listingId) {
+        // The end of an edit of a live ad (or a rejected edit): off to review, not to payment.
+        setBusy("Submitting your changes…");
+        const result = await submitChanges(toInput(values, list), listingId);
+        if (!result.ok) throw new Error(result.error);
+        latest.current.handedOff = true;
+        toast.success(
+          result.data.underReview ? "Sent for review" : "Changes saved",
+          result.data.underReview ? "Your ad will be back on sale as soon as our team approves the changes." : "Your ad is live with the changes.",
+        );
+        router.push(`/my-ads?tab=${result.data.underReview ? "pending" : "active"}`);
+        return;
+      }
+      setBusy(resubmits ? "Saving…" : "Saving your draft…");
+      // A live ad isn't saved until the end - saving it would send it to review.
+      const id = mode === "live" ? listingId : await save(values, list, listingId);
       if (step < 2) {
         setStep(step + 1);
         setAiNote(null);
@@ -323,7 +345,18 @@ export function PostWizard({
 
   return (
     <div className="mt-6">
-      <StepProgress current={step} />
+      <StepProgress current={step} finalLabel={mode === "live" || mode === "fix" ? "Review" : undefined} />
+
+      {mode === "live" && (
+        <p className="mt-6 flex gap-2 rounded-2xl bg-gold-50 p-4 text-sm text-ink-700 ring-1 ring-gold-200">
+          <CircleAlert aria-hidden className="mt-0.5 size-4 shrink-0 text-gold-700" />
+          <span>
+            <strong className="font-semibold text-gold-800">This ad is live. </strong>
+            Nothing changes until you submit at the end. Once you do, our team reviews the changes, and the ad is off the market until they approve
+            them. Your plan and its end date stay the same. To change plan, use Upgrade plan in My ads.
+          </span>
+        </p>
+      )}
 
       {draft?.reviewNote && (
         <p className="mt-6 flex gap-2 rounded-2xl bg-danger/5 p-4 text-sm text-ink-700 ring-1 ring-danger/20">
@@ -612,7 +645,16 @@ export function PostWizard({
         )}
         <button type="button" onClick={next} disabled={!canSell || !!busy} className={buttonClass("primary", "lg", "flex-1")}>
           {busy && <LoaderCircle aria-hidden className="size-4 animate-spin" />}
-          {busy ?? (step === 2 ? "Continue to promote & pay" : "Continue")}
+          {busy ??
+            (step < 2
+              ? "Continue"
+              : mode === "live"
+                ? "Submit changes for review"
+                : mode === "fix"
+                  ? "Resubmit for review"
+                  : mode === "renew"
+                    ? "Continue to renew"
+                    : "Continue to promote & pay")}
         </button>
       </div>
 
@@ -652,14 +694,14 @@ export function PostWizard({
   );
 }
 
-export function StepProgress({ current }: { current: number }) {
+export function StepProgress({ current, finalLabel }: { current: number; finalLabel?: string }) {
   return (
     <ol className="grid grid-cols-4 gap-2">
       {STEPS.map((s, index) => (
         <li key={s.key}>
           <span className={clsx("block h-1.5 rounded-full", index <= current ? "bg-brand-600" : "bg-canvas-dark")} />
           <span className={clsx("mt-2 hidden text-xs font-medium sm:block", index === current ? "text-brand-700" : "text-ink-500")}>
-            {index + 1}. {s.label}
+            {index + 1}. {index === STEPS.length - 1 && finalLabel ? finalLabel : s.label}
           </span>
         </li>
       ))}

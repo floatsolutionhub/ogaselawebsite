@@ -75,10 +75,10 @@ function SignInSteps({ next, onRestart }: { next: string; onRestart: () => void 
       <FormMessage message={state.message} />
       <SubmitButton>Continue</SubmitButton>
 
-      <div className="flex items-center gap-3 text-xs font-medium uppercase tracking-wider text-ink-300">
+      {/* <div className="flex items-center gap-3 text-xs font-medium uppercase tracking-wider text-ink-300">
         <span className="h-px flex-1 bg-canvas-dark" /> or <span className="h-px flex-1 bg-canvas-dark" />
-      </div>
-      <SocialButtons next={next} />
+      </div> */}
+      {/* <SocialButtons next={next} /> */}
 
       <p className="text-center text-sm text-ink-500">
         New to Ogasela?{" "}

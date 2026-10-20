@@ -156,6 +156,14 @@ body {
   animation: rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
+/* Rows that scroll sideways on narrow screens (e.g. tab bars) without showing a scrollbar. */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @keyframes shimmer {
   100% {
     transform: translateX(100%);
@@ -180,4 +188,18 @@ body {
 .bg-noise {
   background-image: radial-gradient(circle at 1px 1px, rgba(16, 24, 40, 0.06) 1px, transparent 0);
   background-size: 24px 24px;
+}
+
+/* The global page loader's bar (src/components/providers/PageLoader.tsx). */
+@keyframes page-loader {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+.page-loader-bar {
+  animation: page-loader 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }

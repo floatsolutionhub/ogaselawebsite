@@ -10,15 +10,19 @@ import {
   checkout,
   confirmCheckout,
   createDraft,
+  deleteListing,
   generateDescription,
   getListingForEdit,
+  resubmitListing,
   suggestPrice,
   updateListing,
+  upgradePlan,
   uploadListingImage,
 } from "@/lib/api/services/seller";
 import { cancelPickupPayment, confirmPickupPayment } from "@/lib/api/services/deals";
 import type { CurrentUser, ListingInput } from "@/lib/api/types";
-import { safeHttpUrl } from "@/lib/format";
+import { safeHttpUrl, shortDate } from "@/lib/format";
+import { canDelete, editMode } from "@/lib/listings";
 import { forgetCheckout, paymentReturnUrl, readCheckout, rememberCheckout } from "@/lib/payments";
 import { checkUpload } from "@/lib/uploads";
 import { uuidSchema } from "@/lib/validation";
@@ -89,12 +93,51 @@ export async function saveDraft(input: DraftInput, id: string | null): Promise<A
   return withUser(async (user) => {
     const body: ListingInput = { ...parsed.data, promotionPlanId: null, latitude: null, longitude: null };
     if (existing?.success) {
-      await ownedListing(user, existing.data);
+      const listing = await ownedListing(user, existing.data);
+      // Live ads (and ones in review) only change through submitChanges, which sends them to review.
+      const mode = editMode(listing);
+      if (mode === null || mode === "live") throw new ApiError(400, "This ad can't be saved as a draft. Submit your changes instead.");
       await updateListing(existing.data, body);
       return existing.data;
     }
     return (await createDraft(body)).id;
   }, "We couldn't save your ad.");
+}
+
+/**
+ * Saves changes to a live ad, or to a rejected edit of one, and sends them to our team for review
+ * (the ad stays off the market until approved; its plan and expiry date don't change). Returns
+ * whether it's under review - it goes straight back live when approval is switched off.
+ */
+export async function submitChanges(input: DraftInput, id: string): Promise<ActionResult<{ underReview: boolean }>> {
+  const parsed = draftSchema.safeParse(input);
+  if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Check your ad's details.");
+  const listingId = uuidSchema.safeParse(id);
+  if (!listingId.success) return fail("That ad couldn't be found.");
+
+  return withUser(async (user) => {
+    const listing = await ownedListing(user, listingId.data);
+    const mode = editMode(listing);
+    if (mode !== "live" && mode !== "fix") throw new ApiError(400, "This ad can't be changed right now. Refresh My ads and try again.");
+    const body: ListingInput = { ...parsed.data, promotionPlanId: null, latitude: listing.latitude, longitude: listing.longitude };
+    let updated = await updateListing(listingId.data, body);
+    if (mode === "fix") updated = await resubmitListing(listingId.data);
+    revalidatePath("/my-ads");
+    return { underReview: updated.status === "PendingReview" };
+  }, "We couldn't submit your changes.");
+}
+
+/** Deletes a draft, rejected, pending or expired ad for good. Paid plans aren't refunded (the page warns first). */
+export async function deleteAd(id: string): Promise<ActionResult<null>> {
+  const listingId = uuidSchema.safeParse(id);
+  if (!listingId.success) return fail("That ad couldn't be found.");
+  return withUser(async (user) => {
+    const listing = await ownedListing(user, listingId.data);
+    if (!canDelete(listing)) throw new ApiError(400, "Live ads can't be deleted. Mark it as sold or let it expire first.");
+    await deleteListing(listingId.data);
+    revalidatePath("/my-ads");
+    return null;
+  }, "We couldn't delete your ad.");
 }
 
 /** One photo, already compressed in the browser - re-checked here before it goes to the API. */
@@ -146,6 +189,14 @@ function checkoutError(error: unknown) {
       return fail("The free plan isn't available in this category. Ads here need a paid plan.");
     case "Listing.FreePlanCapReached":
       return fail("You've used all your free ads. Choose a paid plan, or wait for one of your free ads to end.");
+    case "Listing.ResubmitInstead":
+      return fail("This ad's plan is still running, so there's nothing to pay. Fix it and resubmit it from My ads.");
+    case "Listing.PlanDowngradeNotAllowed":
+      return fail("A running plan can only be upgraded. Choose a plan that costs the same or more.");
+    case "Listing.SamePlan":
+      return fail("Your ad is already on this plan.");
+    case "Listing.NotLive":
+      return fail("Only ads that are live, or being reviewed after an edit, can change plan.");
     default:
       return fail(error, "We couldn't complete checkout.");
   }
@@ -176,6 +227,34 @@ export async function startCheckout(listingId: string, planId: string): Promise<
   return fail("We couldn't start the payment. Please try again.");
 }
 
+/**
+ * Moves an ad whose plan is running onto a bigger plan, for the new plan's full price. Once the
+ * payment is confirmed the new plan starts counting from that moment and the old expiry date no
+ * longer applies.
+ */
+export async function startUpgrade(listingId: string, planId: string): Promise<ActionResult<CheckoutStart>> {
+  const id = uuidSchema.safeParse(listingId);
+  const plan = uuidSchema.safeParse(planId);
+  if (!id.success || !plan.success) return fail("Choose a plan.");
+  const result = await withUser(async (user) => {
+    await ownedListing(user, id.data);
+    return upgradePlan(id.data, plan.data, paymentReturnUrl());
+  });
+  if (!result.ok) return result.code === "SignedOut" ? result : checkoutError(result.code ? new ApiError(400, result.error, result.code) : result.error);
+
+  const outcome = result.data;
+  if (outcome.outcome === "Submitted") {
+    revalidatePath("/my-ads");
+    return { ok: true, data: { kind: "submitted", underReview: outcome.listing.status === "PendingReview" } };
+  }
+  const url = safeHttpUrl(outcome.redirectUrl);
+  if (outcome.outcome === "PaymentRequired" && url && outcome.paymentReference) {
+    await rememberCheckout({ kind: "upgrade", id: id.data, reference: outcome.paymentReference });
+    return { ok: true, data: { kind: "redirect", url } };
+  }
+  return fail("We couldn't start the payment. Please try again.");
+}
+
 export type SettleResult =
   | { status: "paid"; next: string; title: string; body?: string }
   | { status: "pending"; next: string }
@@ -192,6 +271,33 @@ export async function settleCheckout(mode: "confirm" | "cancel"): Promise<Action
   if (!pending) return { ok: true, data: { status: "none" } };
 
   return withUser(async () => {
+    if (pending.kind === "upgrade") {
+      // Same confirm/cancel endpoints as checkout; the payment carries the plan it buys.
+      const back = `/sell/${pending.id}/promote`;
+      const result = mode === "cancel" ? await cancelCheckout(pending.id, pending.reference) : await confirmCheckout(pending.id, pending.reference);
+      switch (result.outcome) {
+        case "Submitted": {
+          await forgetCheckout();
+          revalidatePath("/my-ads");
+          const tab = result.listing.status === "PendingReview" ? "pending" : result.listing.status === "Draft" ? "rejected" : "active";
+          return {
+            status: "paid",
+            next: `/my-ads?tab=${tab}`,
+            title: "Plan upgraded",
+            body: result.listing.expiresAt ? `Your new plan started today and runs until ${shortDate(result.listing.expiresAt)}.` : undefined,
+          } satisfies SettleResult;
+        }
+        case "PaymentFailed":
+          await forgetCheckout();
+          return { status: "failed", next: back, title: "Payment wasn't completed", body: "Your ad stays on its current plan. You can try again any time." } satisfies SettleResult;
+        case "PaymentCancelled":
+          await forgetCheckout();
+          return { status: "cancelled", next: back, title: "Payment cancelled", body: "Nothing was charged. Your ad stays on its current plan." } satisfies SettleResult;
+        default:
+          return { status: "pending", next: back } satisfies SettleResult;
+      }
+    }
+
     if (pending.kind === "listing") {
       const back = `/sell/${pending.id}/promote`;
       const result = mode === "cancel" ? await cancelCheckout(pending.id, pending.reference) : await confirmCheckout(pending.id, pending.reference);
@@ -209,10 +315,10 @@ export async function settleCheckout(mode: "confirm" | "cancel"): Promise<Action
         }
         case "PaymentFailed":
           await forgetCheckout();
-          return { status: "failed", next: back, title: "Payment wasn't completed", body: "Your ad is saved as a draft. You can pay any time." } satisfies SettleResult;
+          return { status: "failed", next: back, title: "Payment wasn't completed", body: "Your ad is saved in My ads. You can pay any time." } satisfies SettleResult;
         case "PaymentCancelled":
           await forgetCheckout();
-          return { status: "cancelled", next: back, title: "Payment cancelled", body: "Nothing was charged. Your ad is saved as a draft. Pay whenever you're ready." } satisfies SettleResult;
+          return { status: "cancelled", next: back, title: "Payment cancelled", body: "Nothing was charged. Your ad is saved in My ads. Pay whenever you're ready." } satisfies SettleResult;
         default:
           return { status: "pending", next: back } satisfies SettleResult;
       }

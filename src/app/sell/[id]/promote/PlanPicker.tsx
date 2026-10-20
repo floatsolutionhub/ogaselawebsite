@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import clsx from "clsx";
-import { Check, Clock, CreditCard, ImageOff, LoaderCircle } from "lucide-react";
+import { ArrowUpCircle, Check, Clock, CreditCard, ImageOff, LoaderCircle } from "lucide-react";
 
-import { settleCheckout, startCheckout } from "@/app/actions/sell";
+import { settleCheckout, startCheckout, startUpgrade } from "@/app/actions/sell";
 import { useToast } from "@/components/providers/ToastProvider";
 import { buttonClass } from "@/components/ui/styles";
 import type { PromotionPlan } from "@/lib/api/types";
@@ -14,15 +14,21 @@ import { formatKobo } from "@/lib/format";
 
 export function PlanPicker({
   listingId,
+  mode,
   plans,
   initialPlanId,
+  current,
   photoCount,
   reviewNote,
   paymentPending,
 }: {
   listingId: string;
+  /** new: first submission. renew: an expired ad. upgrade: a bigger plan for an ad whose plan is running. */
+  mode: "new" | "renew" | "upgrade";
   plans: PromotionPlan[];
   initialPlanId: string | null;
+  /** Upgrades: the plan it's on now and when that ends. */
+  current: { name: string; until: string } | null;
   photoCount: number;
   reviewNote: string | null;
   /** A card payment for this ad that the bank hasn't confirmed yet. */
@@ -42,9 +48,14 @@ export function PlanPicker({
   const pay = () =>
     startPaying(async () => {
       if (!selected) return;
-      const result = await startCheckout(listingId, selected.id);
+      const result = mode === "upgrade" ? await startUpgrade(listingId, selected.id) : await startCheckout(listingId, selected.id);
       if (!result.ok) {
         toast.error("Couldn't complete checkout", result.error);
+        return;
+      }
+      if (mode === "upgrade" && result.data.kind === "submitted") {
+        toast.success("Plan upgraded", "Your new plan started today.");
+        router.push("/my-ads?tab=active");
         return;
       }
       if (result.data.kind === "redirect") {
@@ -76,7 +87,10 @@ export function PlanPicker({
       } else if (outcome.status === "none") {
         setPending(false);
       } else {
-        toast.info("Still waiting for your bank", "We'll submit your ad automatically once it confirms.");
+        toast.info(
+          "Still waiting for your bank",
+          mode === "upgrade" ? "We'll move your ad to its new plan automatically once it confirms." : "We'll submit your ad automatically once it confirms.",
+        );
       }
     });
 
@@ -88,7 +102,9 @@ export function PlanPicker({
           <div className="text-sm">
             <p className="font-semibold text-gold-800">Confirming your payment</p>
             <p className="mt-0.5 text-ink-700">
-              Your bank hasn&apos;t confirmed it yet. We&apos;ll submit your ad for review automatically once it does. You don&apos;t need to pay again.
+              Your bank hasn&apos;t confirmed it yet.{" "}
+              {mode === "upgrade" ? "We'll move your ad to its new plan automatically once it does." : "We'll submit your ad for review automatically once it does."} You
+              don&apos;t need to pay again.
             </p>
             <button type="button" onClick={checkAgain} disabled={checking} className="mt-2 font-semibold text-brand-700">
               {checking ? "Checking…" : "Check again"}
@@ -104,8 +120,23 @@ export function PlanPicker({
         </div>
       )}
 
+      {mode === "upgrade" && current && (
+        <div className="flex gap-3 rounded-2xl bg-brand-50 p-4 text-sm ring-1 ring-brand-100">
+          <ArrowUpCircle aria-hidden className="mt-0.5 size-5 shrink-0 text-brand-600" />
+          <div className="text-ink-700">
+            <p className="font-semibold text-ink-900">
+              You&apos;re on the {current.name} plan until {current.until}
+            </p>
+            <p className="mt-0.5">
+              An upgrade costs the new plan&apos;s full price. It starts the moment your payment is confirmed and runs for its full length from then, so
+              your current end date no longer applies. Your ad keeps its place: no new review is needed for a plan change.
+            </p>
+          </div>
+        </div>
+      )}
+
       <section>
-        <h2 className="mb-3 text-lg font-semibold">1. Choose a promotion plan</h2>
+        <h2 className="mb-3 text-lg font-semibold">1. Choose {mode === "upgrade" ? "your new plan" : "a promotion plan"}</h2>
         <div role="radiogroup" className="grid gap-3 sm:grid-cols-2">
           {plans.map((plan) => {
             const active = plan.id === selectedId;
@@ -190,19 +221,36 @@ export function PlanPicker({
       )}
 
       <p className="text-sm text-ink-500">
-        Once {isFree ? "submitted" : "your payment is confirmed"}, your ad goes to our team for a quick review before buyers can see it.
+        {mode === "upgrade"
+          ? "Once your payment is confirmed, your ad moves to the new plan straight away."
+          : `Once ${isFree ? "submitted" : "your payment is confirmed"}, your ad goes to our team for a quick review before buyers can see it.`}
       </p>
 
       <div className="sticky bottom-16 z-10 space-y-2 rounded-2xl bg-surface/90 py-3 backdrop-blur sm:bottom-0">
         <button type="button" onClick={pay} disabled={!selected || paying || pending} className={buttonClass("primary", "lg", "w-full")}>
           {paying && <LoaderCircle aria-hidden className="size-4 animate-spin" />}
-          {!selected ? "Choose a plan" : paying ? (isFree ? "Submitting your ad…" : "Starting payment…") : isFree ? "Submit for review (free)" : `Pay ${formatKobo(selected.price)}`}
+          {!selected
+            ? "Choose a plan"
+            : paying
+              ? isFree
+                ? "Submitting your ad…"
+                : "Starting payment…"
+              : isFree
+                ? "Submit for review (free)"
+                : mode === "upgrade"
+                  ? `Pay ${formatKobo(selected.price)} and upgrade`
+                  : `Pay ${formatKobo(selected.price)}`}
         </button>
-        <Link href={`/sell?draft=${listingId}`} className="block py-1 text-center text-sm font-medium text-ink-500 hover:text-ink-700">
-          Edit the ad
-        </Link>
-        <Link href="/my-ads?tab=draft" className="block py-1 text-center text-sm font-medium text-ink-500 hover:text-ink-700">
-          Save as draft for now
+        {mode !== "upgrade" && (
+          <Link href={`/sell?draft=${listingId}`} className="block py-1 text-center text-sm font-medium text-ink-500 hover:text-ink-700">
+            Edit the ad
+          </Link>
+        )}
+        <Link
+          href={`/my-ads?tab=${mode === "upgrade" ? "active" : mode === "renew" ? "expired" : "draft"}`}
+          className="block py-1 text-center text-sm font-medium text-ink-500 hover:text-ink-700"
+        >
+          {mode === "new" ? "Save as draft for now" : "Back to My ads"}
         </Link>
       </div>
     </div>
