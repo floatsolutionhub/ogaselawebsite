@@ -65,6 +65,9 @@ const draftSchema = z.object({
     .array(z.string().refine((u) => safeHttpUrl(u) !== null))
     .max(30),
   location: z.string().trim().max(120).nullable(),
+  // The city's coordinates (never the seller's own) - null when the city has none.
+  latitude: z.number().min(-90).max(90).nullable(),
+  longitude: z.number().min(-180).max(180).nullable(),
   hasOriginalReceipt: z.boolean().nullable(),
   youTubeUrl: socialLink("youTubeUrl"),
   tikTokUrl: socialLink("tikTokUrl"),
@@ -73,6 +76,12 @@ const draftSchema = z.object({
 });
 
 export type DraftInput = z.input<typeof draftSchema>;
+
+/** No coordinates came with an unchanged place - it keeps the ad's own. */
+function withCoordinates(input: z.output<typeof draftSchema>, listing: { location: string | null; latitude: number | null; longitude: number | null }) {
+  const keep = input.latitude === null && input.location !== null && input.location === listing.location;
+  return keep ? { ...input, latitude: listing.latitude, longitude: listing.longitude } : input;
+}
 
 async function ownedListing(user: CurrentUser, id: string) {
   const listing = await getListingForEdit(id);
@@ -91,16 +100,15 @@ export async function saveDraft(input: DraftInput, id: string | null): Promise<A
   if (existing && !existing.success) return fail("That draft couldn't be found.");
 
   return withUser(async (user) => {
-    const body: ListingInput = { ...parsed.data, promotionPlanId: null, latitude: null, longitude: null };
     if (existing?.success) {
       const listing = await ownedListing(user, existing.data);
       // Live ads (and ones in review) only change through submitChanges, which sends them to review.
       const mode = editMode(listing);
       if (mode === null || mode === "live") throw new ApiError(400, "This ad can't be saved as a draft. Submit your changes instead.");
-      await updateListing(existing.data, body);
+      await updateListing(existing.data, { ...withCoordinates(parsed.data, listing), promotionPlanId: null });
       return existing.data;
     }
-    return (await createDraft(body)).id;
+    return (await createDraft({ ...parsed.data, promotionPlanId: null })).id;
   }, "We couldn't save your ad.");
 }
 
@@ -119,7 +127,7 @@ export async function submitChanges(input: DraftInput, id: string): Promise<Acti
     const listing = await ownedListing(user, listingId.data);
     const mode = editMode(listing);
     if (mode !== "live" && mode !== "fix") throw new ApiError(400, "This ad can't be changed right now. Refresh My ads and try again.");
-    const body: ListingInput = { ...parsed.data, promotionPlanId: null, latitude: listing.latitude, longitude: listing.longitude };
+    const body: ListingInput = { ...withCoordinates(parsed.data, listing), promotionPlanId: null };
     let updated = await updateListing(listingId.data, body);
     if (mode === "fix") updated = await resubmitListing(listingId.data);
     revalidatePath("/my-ads");

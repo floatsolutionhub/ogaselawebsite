@@ -18,6 +18,12 @@ export const metadata: Metadata = { title: "Post an ad", robots: { index: false 
 /** Until the plans load (or if they can't) - the plan picked at checkout decides how many are kept. */
 const FALLBACK_MAX_PHOTOS = 5;
 
+/** An ad's saved place, "City, State", back into its parts. */
+function splitPlace(location: string | null): { city: string; state: string } {
+  const at = location?.lastIndexOf(", ") ?? -1;
+  return at > 0 ? { city: location!.slice(0, at), state: location!.slice(at + 2) } : { city: "", state: "" };
+}
+
 export default async function SellPage({ searchParams }: PageProps<"/sell">) {
   const draftParam = (await searchParams).draft;
   const draftId = typeof draftParam === "string" && uuidSchema.safeParse(draftParam).success ? draftParam : null;
@@ -41,7 +47,10 @@ export default async function SellPage({ searchParams }: PageProps<"/sell">) {
     .map((c) => ({
       id: c.id,
       name: c.name,
-      children: (categories ?? []).filter((x) => x.parentCategoryId === c.id).map((x) => ({ id: x.id, name: x.name })),
+      imageUrl: c.imageUrl,
+      children: (categories ?? [])
+        .filter((x) => x.parentCategoryId === c.id)
+        .map((x) => ({ id: x.id, name: x.name, imageUrl: x.imageUrl })),
     }));
 
   let draft: WizardDraft | null = null;
@@ -53,6 +62,7 @@ export default async function SellPage({ searchParams }: PageProps<"/sell">) {
       title: owned.title,
       categoryId: parent?.id ?? owned.categoryId,
       subcategoryId: parent && parent.id !== owned.categoryId ? owned.categoryId : "",
+      ...splitPlace(owned.location),
       condition: owned.condition,
       description: owned.description,
       price: owned.price !== null ? String(owned.price) : "",
@@ -110,7 +120,7 @@ export default async function SellPage({ searchParams }: PageProps<"/sell">) {
         draft={draft}
         mode={mode ?? "new"}
         canSell={canSell}
-        location={location.city || location.state ? locationLabel(location) : null}
+        place={{ state: location.state, city: location.city }}
         photoLimits={{ max: limits.length ? Math.max(...limits) : FALLBACK_MAX_PHOTOS, min: limits.length ? Math.min(...limits) : FALLBACK_MAX_PHOTOS }}
       />
     </Container>

@@ -3,23 +3,46 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
-import { Camera, Check, ChevronLeft, CircleAlert, ImagePlus, Link as LinkIcon, LoaderCircle, Sparkles, Tag, X } from "lucide-react";
+import {
+  Ban,
+  Camera,
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  CircleAlert,
+  ImagePlus,
+  Link as LinkIcon,
+  LoaderCircle,
+  LocateFixed,
+  MapPin,
+  Search,
+  Sparkles,
+  Store,
+  Tag,
+  X,
+} from "lucide-react";
 
+import { loadCities, loadStates, locateCity } from "@/app/actions/geo";
 import { aiDescription, aiPrice, saveDraft, submitChanges, uploadPhoto, type DraftInput } from "@/app/actions/sell";
 import { useToast } from "@/components/providers/ToastProvider";
 import { Dialog } from "@/components/ui/Dialog";
 import { buttonClass, inputClass } from "@/components/ui/styles";
 import { compressImage, MAX_EDGE, UploadError } from "@/lib/client/images";
-import { formatNaira } from "@/lib/format";
+import type { NigeriaCity, NigeriaState } from "@/lib/api/types";
+import { formatNaira, safeHttpUrl } from "@/lib/format";
 import type { EditMode } from "@/lib/listings";
 
-type CategoryNode = { id: string; name: string; children: { id: string; name: string }[] };
+type CategoryOption = { id: string; name: string; imageUrl: string | null };
+type CategoryNode = CategoryOption & { children: CategoryOption[] };
 
 export type WizardDraft = {
   id: string;
   title: string;
   categoryId: string;
   subcategoryId: string;
+  /** Where the item is - saved on the ad as "City, State". */
+  state: string;
+  city: string;
   condition: "New" | "Used";
   description: string;
   price: string;
@@ -41,6 +64,8 @@ const EMPTY: Values = {
   title: "",
   categoryId: "",
   subcategoryId: "",
+  state: "",
+  city: "",
   condition: "",
   description: "",
   price: "",
@@ -93,22 +118,23 @@ export function PostWizard({
   draft,
   mode,
   canSell,
-  location,
+  place,
   photoLimits,
 }: {
   tree: CategoryNode[];
   draft: WizardDraft | null;
   mode: EditMode;
   canSell: boolean;
-  location: string | null;
+  /** Where a new ad starts: the area the visitor is browsing (they can change it). */
+  place: { state: string; city: string };
   photoLimits: { max: number; min: number };
 }) {
   const router = useRouter();
   const toast = useToast();
   const [step, setStep] = useState(() =>
-    !draft ? 0 : !draft.title || !draft.categoryId ? 0 : draft.photos.length === 0 ? 1 : 2,
+    !draft ? 0 : !draft.title || !draft.categoryId || !draft.city ? 0 : draft.photos.length === 0 ? 1 : 2,
   );
-  const [values, setValues] = useState<Values>(draft ? { ...draft } : EMPTY);
+  const [values, setValues] = useState<Values>(draft ? { ...draft } : { ...EMPTY, ...place });
   const [errors, setErrors] = useState<Partial<Record<keyof Values, string>>>({});
   const [photos, setPhotos] = useState<Photo[]>(() => (draft?.photos ?? []).map((url) => ({ key: url, preview: url, url })));
   const [listingId, setListingId] = useState<string | null>(draft?.id ?? null);
@@ -116,6 +142,12 @@ export function PostWizard({
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiNote, setAiNote] = useState<string | null>(null);
+  /** Which picker sheet is open on the details step. */
+  const [sheet, setSheet] = useState<"category" | "subcategory" | "state" | "city" | null>(null);
+  const [states, setStates] = useState<NigeriaState[] | null>(null);
+  /** The cities last loaded, and which state they belong to. */
+  const [loadedCities, setLoadedCities] = useState<{ stateId: string; list: NigeriaCity[] } | null>(null);
+  const [locating, setLocating] = useState(false);
   const askedFor = useRef<{ description?: string; price?: string }>({});
   const fileInput = useRef<HTMLInputElement>(null);
   const cameraInput = useRef<HTMLInputElement>(null);
@@ -137,6 +169,58 @@ export function PostWizard({
     [],
   );
 
+  // ---- Place (state & city) ----
+
+  useEffect(() => {
+    let active = true;
+    loadStates().then((list) => active && setStates(list));
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const placeState = states?.find((s) => s.name === values.state);
+  const placeStateId = placeState?.id;
+  useEffect(() => {
+    if (!placeStateId) return;
+    let active = true;
+    loadCities(placeStateId).then((list) => active && setLoadedCities({ stateId: placeStateId, list }));
+    return () => {
+      active = false;
+    };
+  }, [placeStateId]);
+  const citiesLoaded = !!placeStateId && loadedCities?.stateId === placeStateId;
+  const cities = citiesLoaded ? loadedCities.list : [];
+  const placeCity = cities.find((c) => c.name === values.city);
+
+  /** Fills in state and city from the city nearest the browser's position. */
+  const locateMe = () => {
+    if (!("geolocation" in navigator)) {
+      toast.error("Your browser can't share its location", "Choose your state and city instead.");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const result = await locateCity(position.coords.latitude, position.coords.longitude);
+        setLocating(false);
+        if (!result.ok) {
+          toast.info("Couldn't find your city", result.error);
+          return;
+        }
+        const { state, city } = result.data;
+        setValues((prev) => ({ ...prev, state: state.name, city: city.name }));
+        setErrors((prev) => ({ ...prev, state: undefined, city: undefined }));
+        toast.success("Location set", `${city.name}, ${state.name}`);
+      },
+      () => {
+        setLocating(false);
+        toast.info("Location access not granted", "Choose your state and city instead.");
+      },
+      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 10 * 60_000 },
+    );
+  };
+
   // ---- Saving ----
 
   const toInput = (v: Values, list: Photo[]): DraftInput => ({
@@ -146,7 +230,11 @@ export function PostWizard({
     description: v.description.trim(),
     price: v.price ? Number(v.price) : null,
     mediaUrls: list.filter((p) => p.url).map((p) => p.url!),
-    location,
+    location: v.state && v.city ? `${v.city}, ${v.state}` : null,
+    // The city's coordinates, never the seller's own position. Null when they aren't loaded yet -
+    // the server then keeps an unchanged place's own.
+    latitude: v.city === placeCity?.name ? placeCity.latitude : null,
+    longitude: v.city === placeCity?.name ? placeCity.longitude : null,
     hasOriginalReceipt: v.condition === "Used" ? v.hasReceipt : null,
     // A half-typed link is left out of a draft save; Continue flags it.
     ...Object.fromEntries(
@@ -285,6 +373,8 @@ export function PostWizard({
     if (current.key === "details") {
       if (values.title.trim().length < 5) found.title = "Give your listing a more descriptive title";
       if (!values.categoryId) found.categoryId = "Choose a category";
+      if (!values.state) found.state = "Choose the state the item is in";
+      if (!values.city) found.city = "Choose the city the item is in";
       if (!values.condition) found.condition = "Choose the item's condition";
     }
     if (current.key === "photos" && photos.length === 0) {
@@ -387,39 +477,70 @@ export function PostWizard({
               <FieldError message={errors.title} />
             </div>
 
-            <fieldset>
-              <legend className={label}>Category</legend>
-              <div className="flex flex-wrap gap-2">
-                {tree.map((c) => (
-                  <Chip
-                    key={c.id}
-                    selected={c.id === values.categoryId}
-                    onClick={() => {
-                      setValues((prev) => ({ ...prev, categoryId: c.id, subcategoryId: "" }));
-                      setErrors((prev) => ({ ...prev, categoryId: undefined }));
-                    }}
-                  >
-                    {c.name}
-                  </Chip>
-                ))}
-              </div>
+            <div>
+              <span id="category-label" className={label}>Category</span>
+              <SelectButton
+                labelledBy="category-label"
+                value={category?.name}
+                placeholder="Select Category"
+                invalid={!!errors.categoryId}
+                onClick={() => setSheet("category")}
+              />
               <FieldError message={errors.categoryId} />
-            </fieldset>
+            </div>
 
-            {category && category.children.length > 0 && (
-              <fieldset>
-                <legend className={label}>
-                  Sub category <span className="font-normal text-ink-500">(optional)</span>
-                </legend>
-                <div className="flex flex-wrap gap-2">
-                  {category.children.map((c) => (
-                    <Chip key={c.id} selected={c.id === values.subcategoryId} onClick={() => set("subcategoryId", c.id === values.subcategoryId ? "" : c.id)}>
-                      {c.name}
-                    </Chip>
-                  ))}
+            <div>
+              <span id="subcategory-label" className={label}>
+                Sub category <span className="font-normal text-ink-500">(optional)</span>
+              </span>
+              <SelectButton
+                labelledBy="subcategory-label"
+                value={subcategory?.name}
+                placeholder={category && category.children.length === 0 ? "No sub categories" : "Select Sub category"}
+                disabled={!category || category.children.length === 0}
+                onClick={() => setSheet("subcategory")}
+              />
+            </div>
+
+            <div>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <span id="place-label" className="text-base font-semibold text-ink-900">
+                  Location
+                </span>
+                <button
+                  type="button"
+                  onClick={locateMe}
+                  disabled={locating}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 transition hover:bg-brand-100 disabled:opacity-60"
+                >
+                  {locating ? <LoaderCircle aria-hidden className="size-3.5 animate-spin" /> : <LocateFixed aria-hidden className="size-3.5" />}
+                  Use my current location
+                </button>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <SelectButton
+                    labelledBy="place-label"
+                    value={values.state || undefined}
+                    placeholder="Select State"
+                    invalid={!!errors.state}
+                    onClick={() => setSheet("state")}
+                  />
+                  <FieldError message={errors.state} />
                 </div>
-              </fieldset>
-            )}
+                <div>
+                  <SelectButton
+                    labelledBy="place-label"
+                    value={values.city || undefined}
+                    placeholder="Select City"
+                    disabled={!values.state}
+                    invalid={!!errors.city}
+                    onClick={() => setSheet("city")}
+                  />
+                  <FieldError message={errors.city} />
+                </div>
+              </div>
+            </div>
 
             <fieldset>
               <legend className={label}>Condition</legend>
@@ -690,6 +811,56 @@ export function PostWizard({
           {suggestion?.kind === "price" ? "Would you like to use this price? You can still change it." : "Would you like to use this description? You can still edit it."}
         </p>
       </Dialog>
+
+      <Dialog open={sheet === "category"} onClose={() => setSheet(null)} placement="sheet" title="Select Category">
+        <OptionList
+          options={tree}
+          selectedId={values.categoryId}
+          onSelect={(id) => {
+            setSheet(null);
+            if (id === values.categoryId) return;
+            // One update, so the subcategory is cleared together with the category change.
+            setValues((prev) => ({ ...prev, categoryId: id, subcategoryId: "" }));
+            setErrors((prev) => ({ ...prev, categoryId: undefined }));
+          }}
+        />
+      </Dialog>
+      <Dialog open={sheet === "subcategory"} onClose={() => setSheet(null)} placement="sheet" title="Select Sub category">
+        <OptionList
+          options={category?.children ?? []}
+          selectedId={values.subcategoryId}
+          clearLabel="None"
+          onSelect={(id) => {
+            setSheet(null);
+            set("subcategoryId", id);
+          }}
+        />
+      </Dialog>
+      <Dialog open={sheet === "state"} onClose={() => setSheet(null)} placement="sheet" title="Select State">
+        <PlaceList
+          places={states}
+          selectedId={placeStateId ?? ""}
+          searchLabel="Search state"
+          onSelect={(entry) => {
+            setSheet(null);
+            if (entry.name === values.state) return;
+            // One update, so the city is cleared together with the state change.
+            setValues((prev) => ({ ...prev, state: entry.name, city: "" }));
+            setErrors((prev) => ({ ...prev, state: undefined }));
+          }}
+        />
+      </Dialog>
+      <Dialog open={sheet === "city"} onClose={() => setSheet(null)} placement="sheet" title="Select City">
+        <PlaceList
+          places={citiesLoaded ? cities : null}
+          selectedId={placeCity?.id ?? ""}
+          searchLabel="Search city"
+          onSelect={(entry) => {
+            setSheet(null);
+            set("city", entry.name);
+          }}
+        />
+      </Dialog>
     </div>
   );
 }
@@ -709,20 +880,76 @@ export function StepProgress({ current, finalLabel }: { current: number; finalLa
   );
 }
 
-function Chip({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: React.ReactNode }) {
+/** A field-like button that opens a picker sheet. */
+function SelectButton({
+  labelledBy,
+  value,
+  placeholder,
+  disabled,
+  invalid,
+  onClick,
+}: {
+  labelledBy: string;
+  value?: string;
+  placeholder: string;
+  disabled?: boolean;
+  invalid?: boolean;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"
-      role="radio"
-      aria-checked={selected}
       onClick={onClick}
-      className={clsx(
-        "rounded-full border px-4 py-2 text-sm font-medium transition",
-        selected ? "border-brand-600 bg-brand-600 text-white" : "border-canvas-dark bg-white text-ink-700 hover:border-brand-300",
-      )}
+      disabled={disabled}
+      aria-haspopup="dialog"
+      aria-labelledby={labelledBy}
+      className={clsx(inputClass, invalid && "border-danger", "flex items-center justify-between gap-3 text-left disabled:cursor-not-allowed disabled:bg-canvas disabled:opacity-60")}
     >
-      {children}
+      <span className={clsx("truncate", !value && "text-ink-300")}>{value ?? placeholder}</span>
+      <ChevronDown aria-hidden className="size-5 shrink-0 text-ink-500" />
     </button>
+  );
+}
+
+/** The options inside a picker sheet; clearLabel adds a first row that clears the choice. */
+function OptionList({
+  options,
+  selectedId,
+  onSelect,
+  clearLabel,
+}: {
+  options: CategoryOption[];
+  selectedId: string;
+  onSelect: (id: string) => void;
+  clearLabel?: string;
+}) {
+  const rows = clearLabel ? [{ id: "", name: clearLabel, imageUrl: null }, ...options] : options;
+  return (
+    <ul role="listbox" className="-mx-2">
+      {rows.map((option) => {
+        const selected = option.id === selectedId;
+        return (
+          <li key={option.id || "none"}>
+            <button
+              type="button"
+              role="option"
+              aria-selected={selected}
+              onClick={() => onSelect(option.id)}
+              className={clsx(
+                "flex w-full items-center justify-between rounded-xl px-3 py-3 text-left text-[15px] font-medium transition hover:bg-canvas",
+                selected ? "text-brand-700" : "text-ink-900",
+              )}
+            >
+              <span className="flex min-w-0 items-center gap-3">
+                <OptionArt id={option.id} imageUrl={option.imageUrl} />
+                <span className="truncate">{option.name}</span>
+              </span>
+              {selected && <Check aria-hidden className="size-5 shrink-0 text-brand-600" />}
+            </button>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
@@ -736,6 +963,84 @@ function AiButton({ loading, onClick, children }: { loading: boolean; onClick: (
     >
       <Sparkles aria-hidden className="size-3.5" /> {children}
     </button>
+  );
+}
+
+/** States or cities to pick from, with a search box; null while they load. */
+function PlaceList<T extends { id: string; name: string }>({
+  places,
+  selectedId,
+  searchLabel,
+  onSelect,
+}: {
+  places: T[] | null;
+  selectedId: string;
+  searchLabel: string;
+  onSelect: (place: T) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const shown = (places ?? []).filter((p) => p.name.toLowerCase().includes(q));
+  return (
+    <div className="space-y-3">
+      <div className="relative">
+        <Search aria-hidden className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-ink-500" />
+        <input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder={searchLabel}
+          aria-label={searchLabel}
+          className={clsx(inputClass, "pl-10")}
+        />
+      </div>
+      {places === null ? (
+        <div className="flex justify-center py-8">
+          <LoaderCircle aria-hidden className="size-6 animate-spin text-brand-600" />
+        </div>
+      ) : (
+        <ul role="listbox" className="-mx-2 max-h-[50dvh] overflow-y-auto">
+          {shown.map((place) => {
+            const selected = place.id === selectedId;
+            return (
+              <li key={place.id}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  onClick={() => onSelect(place)}
+                  className={clsx(
+                    "flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-[15px] font-medium transition hover:bg-canvas",
+                    selected ? "text-brand-700" : "text-ink-900",
+                  )}
+                >
+                  <MapPin aria-hidden className={clsx("size-4 shrink-0", selected ? "text-brand-600" : "text-ink-300")} />
+                  <span className="flex-1 truncate">{place.name}</span>
+                  {selected && <Check aria-hidden className="size-5 shrink-0 text-brand-600" />}
+                </button>
+              </li>
+            );
+          })}
+          {shown.length === 0 && <li className="py-6 text-center text-sm text-ink-500">Nothing matches “{query}”</li>}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/** A category's image beside its name - the same artwork and fallback as the home page stalls. */
+function OptionArt({ id, imageUrl }: { id: string; imageUrl: string | null }) {
+  const image = safeHttpUrl(imageUrl);
+  return (
+    <span aria-hidden className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-xl bg-brand-50 ring-1 ring-brand-100">
+      {image ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={image} alt="" loading="lazy" referrerPolicy="no-referrer" className="size-full object-cover" />
+      ) : id ? (
+        <Store className="size-5 text-brand-600" />
+      ) : (
+        <Ban className="size-5 text-ink-300" />
+      )}
+    </span>
   );
 }
 

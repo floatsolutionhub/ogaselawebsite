@@ -17,6 +17,7 @@ export function Dialog({
   footer,
   size = "md",
   dismissible = true,
+  placement = "auto",
 }: {
   open: boolean;
   onClose: () => void;
@@ -27,6 +28,8 @@ export function Dialog({
   size?: "sm" | "md" | "lg";
   /** False while something is in flight, so it can't be closed halfway. */
   dismissible?: boolean;
+  /** "sheet" stays at the bottom on every screen and slides up into view. */
+  placement?: "auto" | "sheet";
 }) {
   const ref = useRef<HTMLDialogElement>(null);
 
@@ -50,7 +53,7 @@ export function Dialog({
       }}
       className={clsx(
         "m-0 mt-auto max-h-[92dvh] w-full max-w-none overflow-hidden rounded-t-3xl bg-white p-0 text-ink-900 shadow-lift backdrop:bg-ink-900/50 backdrop:backdrop-blur-[2px]",
-        "sm:m-auto sm:rounded-3xl",
+        placement === "auto" ? "sm:m-auto sm:rounded-3xl" : "animate-sheet-up sm:mx-auto sm:mb-0 sm:mt-auto",
         size === "sm" && "sm:max-w-md",
         size === "md" && "sm:max-w-lg",
         size === "lg" && "sm:max-w-2xl",

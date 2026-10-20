@@ -156,6 +156,20 @@ body {
   animation: rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
+/* Bottom sheets (Dialog placement="sheet") slide up from the bottom edge. */
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@utility animate-sheet-up {
+  animation: sheet-up 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
 /* Rows that scroll sideways on narrow screens (e.g. tab bars) without showing a scrollbar. */
 @utility no-scrollbar {
   scrollbar-width: none;
