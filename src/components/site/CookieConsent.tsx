@@ -46,9 +46,7 @@ export function CookieConsent() {
               <Cookie size={20} className="text-gold-400" />
             </div>
             <p className="flex-1 text-sm leading-relaxed text-white/80">
-              We don&apos;t use advertising or analytics cookies. We only store what the site needs
-              to work, like remembering this notice, and use Cloudflare to keep bots out of our
-              forms. The map on Locate us loads only if you ask for it. See our{" "}
+              We only use essential cookies to keep the site working. See our{" "}
               <Link href="/privacy-policy#cookies" className="font-semibold text-white hover:underline">
                 Privacy Policy
               </Link>
@@ -59,7 +57,7 @@ export function CookieConsent() {
               onClick={accept}
               className="w-full flex-shrink-0 rounded-full bg-brand-500 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-400 sm:w-auto"
             >
-              Got it
+              Accept
             </button>
           </div>
         </motion.div>
