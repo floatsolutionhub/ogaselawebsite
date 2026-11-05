@@ -11,7 +11,7 @@ export function DonateOptions() {
     <div className="space-y-6">
       <p className="text-sm leading-relaxed text-ink-500">
         Every marketplace started with someone willing to bet on it early. We&apos;re building
-        Ogasela from the ground up — for the market woman in Alaba, the mechanic in Aba, the
+        Ogasela from the ground up for the market woman in Alaba, the mechanic in Aba, the
         student hustling in Nsukka. Your support keeps the servers running and the dream moving.
         No amount is too small.
       </p>

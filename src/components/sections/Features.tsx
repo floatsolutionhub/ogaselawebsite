@@ -11,7 +11,7 @@ const features = [
   {
     icon: Tags,
     title: "Every category",
-    description: "Phones, fashion, property, vehicles, home & furniture, jobs, services and more — all in one app.",
+    description: "Phones, fashion, property, vehicles, home & furniture, jobs, services and more, all in one app.",
   },
   {
     icon: MapPinned,
@@ -41,7 +41,7 @@ const features = [
   {
     icon: Sparkles,
     title: "AI listing helper",
-    description: "Get a description written for you, a suggested price from similar ads, and cleaner photos — in seconds.",
+    description: "Get a description written for you, a suggested price from similar ads, and cleaner photos in seconds.",
   },
 ];
 

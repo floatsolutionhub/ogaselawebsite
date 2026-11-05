@@ -50,7 +50,7 @@ export default function LocateUsPage() {
                 </IconBadge>
                 <div>
                   <h3 className="font-bold text-ink-900">Office hours</h3>
-                  <p className="mt-1 text-sm text-ink-500">Monday – Friday, 9am – 5pm WAT</p>
+                  <p className="mt-1 text-sm text-ink-500">Monday to Friday, 9am to 5pm WAT</p>
                 </div>
               </div>
 

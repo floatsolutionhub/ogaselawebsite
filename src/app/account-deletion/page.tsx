@@ -35,7 +35,7 @@ export default function AccountDeletionPage() {
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-ink-500">
                 Keeps your account active while we delete specific personal data you tell us
-                about — for example a listing, a review, or your chat history.
+                about, for example a listing, a review, or your chat history.
               </p>
             </div>
           </FadeIn>

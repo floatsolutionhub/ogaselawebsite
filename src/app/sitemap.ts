@@ -1,5 +1,8 @@
 import type { MetadataRoute } from "next";
 
+// Written to a file at build time (the site is a static export).
+export const dynamic = "force-static";
+
 const pages = [
   "",
   "/how-it-works",

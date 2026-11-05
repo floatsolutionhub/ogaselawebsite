@@ -47,7 +47,7 @@ export function ContactForm() {
         <CheckCircle2 size={40} className="text-brand-600" />
         <h3 className="mt-4 text-lg font-bold text-ink-900">Message sent</h3>
         <p className="mt-2 max-w-sm text-sm text-ink-500">
-          Thanks for reaching out — our team will get back to you as soon as possible.
+          Thanks for reaching out. Our team will get back to you as soon as possible.
         </p>
         <button
           type="button"

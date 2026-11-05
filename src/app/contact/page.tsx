@@ -8,7 +8,7 @@ import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Contact us",
-  description: "Get in touch with the Ogasela team — we're happy to help.",
+  description: "Get in touch with the Ogasela team. We're happy to help.",
 };
 
 export default function ContactPage() {
@@ -17,11 +17,11 @@ export default function ContactPage() {
       <PageHeader
         eyebrow="Contact us"
         title="We'd love to hear from you"
-        description="Questions, feedback, or partnership ideas — send us a message and our team will respond as soon as possible."
+        description="Questions, feedback, or partnership ideas? Send us a message and our team will respond as soon as possible."
       />
 
       <section className="py-20">
-        <Container className="grid gap-12 lg:grid-cols-5">
+        <Container className="grid gap-12 lg:grid-cols-5 [&>*]:min-w-0">
           <FadeIn className="lg:col-span-2">
             <div className="space-y-6">
               <InfoCard
@@ -33,7 +33,7 @@ export default function ContactPage() {
               <InfoCard
                 icon={<Clock size={20} />}
                 title="Response time"
-                lines={["We typically reply within 1–2 business days."]}
+                lines={["We typically reply within 1 to 2 business days."]}
               />
             </div>
           </FadeIn>
@@ -63,7 +63,7 @@ function InfoCard({
       <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-700">
         {icon}
       </div>
-      <div>
+      <div className="min-w-0 break-words">
         <h3 className="font-bold text-ink-900">{title}</h3>
         {lines.map((line) => (
           <p key={line} className="mt-1 text-sm text-ink-500">

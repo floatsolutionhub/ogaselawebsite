@@ -138,7 +138,7 @@ export function DeletionRequestForm() {
           placeholder={
             requestType === "DeleteSpecificData"
               ? "Let us know which specific data you'd like deleted (e.g. a listing, a review, your chat history)."
-              : "Optional — anything else we should know?"
+              : "Optional: anything else we should know?"
           }
           className="w-full rounded-2xl border border-ink-900/10 bg-white px-4 py-3 text-sm text-ink-900 outline-none transition-colors focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
         />

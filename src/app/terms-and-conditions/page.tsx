@@ -156,7 +156,7 @@ export default function TermsPage() {
           1% of the item&apos;s price. Refunds are paid to your original payment method through
           our payment provider; how long they take to reach you depends on your bank. Once you
           have collected the item, or it has been delivered, the order can no longer be
-          cancelled - raise a dispute instead.
+          cancelled; raise a dispute instead.
         </li>
         <li>
           <strong>Sellers.</strong> If a buyer requests Office Pickup on your ad, you agree to

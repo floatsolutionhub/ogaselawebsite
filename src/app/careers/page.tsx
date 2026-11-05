@@ -19,7 +19,7 @@ const perks = [
   {
     icon: Sprout,
     title: "Room to grow",
-    description: "We're early — you'll help shape the product, not just execute a spec.",
+    description: "We're early, so you'll help shape the product, not just execute a spec.",
   },
   {
     icon: Users,
@@ -78,7 +78,7 @@ export default function CareersPage() {
               matching role opens up.
             </p>
             <a
-              href={`mailto:${site.supportEmail}?subject=${encodeURIComponent("General application — Careers")}`}
+              href={`mailto:${site.supportEmail}?subject=${encodeURIComponent("General application: Careers")}`}
               className="mt-8 inline-flex items-center justify-center rounded-full bg-brand-600 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 transition-colors hover:bg-brand-700"
             >
               Send a general application

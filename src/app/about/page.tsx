@@ -85,7 +85,7 @@ const values = [
     icon: Handshake,
     title: "Community first",
     description:
-      "We're building for the trader in Alaba, the student in Nsukka and the hustler in Port Harcourt — not just the big cities.",
+      "We're building for the trader in Alaba, the student in Nsukka and the hustler in Port Harcourt, not just the big cities.",
   },
   {
     icon: ShieldCheck,

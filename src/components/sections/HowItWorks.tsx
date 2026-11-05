@@ -36,7 +36,7 @@ export function HowItWorks() {
             Selling on Ogasela takes three steps
           </h2>
           <p className="mt-4 text-lg text-ink-500">
-            No confusing fees and no commission on your deals — just a straightforward way to
+            No confusing fees and no commission on your deals. Just a straightforward way to
             turn what you have into what you need.
           </p>
         </FadeIn>

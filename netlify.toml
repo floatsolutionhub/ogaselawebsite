@@ -1,0 +1,47 @@
+[build]
+  command = "npm run build"
+  # Static export (output: "export" in next.config.ts) - plain files, no Netlify Functions.
+  publish = "out"
+
+[secrets_scanning]
+  omit_keys = ["NEXT_PUBLIC_TURNSTILE_SITE_KEY"]
+
+# Redirects run on Netlify's CDN (no functions). The query string is passed on unchanged.
+
+# The payment gateways' original callback path - published app builds depend on it.
+[[redirects]]
+  from = "/wallet/callback"
+  to = "/payment/complete"
+  status = 302
+
+# Links already sent in Ogasela.API's emails (BrandedEmailTemplate footer).
+[[redirects]]
+  from = "/help"
+  to = "/contact"
+  status = 302
+
+[[redirects]]
+  from = "/privacy"
+  to = "/privacy-policy"
+  status = 302
+
+[[redirects]]
+  from = "/terms"
+  to = "/terms-and-conditions"
+  status = 302
+
+# Ad and seller links from when ogasela.com was the web marketplace - those live in the app now.
+[[redirects]]
+  from = "/listing/*"
+  to = "/#download"
+  status = 301
+
+[[redirects]]
+  from = "/seller/*"
+  to = "/#download"
+  status = 301
+
+[[redirects]]
+  from = "/search"
+  to = "/#download"
+  status = 301

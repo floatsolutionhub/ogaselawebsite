@@ -33,7 +33,7 @@ export function GetInvolved() {
               <h3 className="mt-6 text-2xl font-bold">Join our testers</h3>
               <p className="mt-3 flex-1 text-brand-100">
                 Try pre-release builds of the app on your own phone, tell us what works and what
-                doesn&apos;t, and help shape a marketplace built for how Nigerians really trade —
+                doesn&apos;t, and help shape a marketplace built for how Nigerians really trade,
                 before anyone else gets their hands on it.
               </p>
               <button
@@ -53,7 +53,7 @@ export function GetInvolved() {
               </div>
               <h3 className="mt-6 text-2xl font-bold text-ink-900">Support our journey</h3>
               <p className="mt-3 flex-1 text-ink-500">
-                Building Nigeria&apos;s marketplace from scratch takes grit — and a little
+                Building Nigeria&apos;s marketplace from scratch takes grit and a little
                 help. Every contribution fuels the servers, the hustle, and the dream of a fairer
                 marketplace for every trader, from Alaba to Aba.
               </p>
